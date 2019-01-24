@@ -16,6 +16,8 @@ from skimage.transform import resize
 
 import sys
 
+import json
+
 class ImageFolder(Dataset):
     def __init__(self, folder_path, img_size=416):
         self.files = sorted(glob.glob('%s/*.*' % folder_path))
@@ -119,3 +121,76 @@ class ListDataset(Dataset):
 
     def __len__(self):
         return len(self.img_files)
+
+
+class LabelboxDataset(Dataset):
+    
+    def __init__(self, jsonpath, class_names, img_size=416):
+        self.img_path = jsonpath.replace('labels', 'images').replace('.json',
+                                                                     '')
+        self.class_names = class_names
+        self.img_shape = (img_size, img_size)
+        self.max_objects = 50
+
+        with open(jsonpath, 'r') as f:
+            self.labellist = json.load(f)
+
+    def __getitem__(self, index):
+        # Load the image
+        labeldict = self.labellist[index % len(self.labellist)]
+
+        img_path = os.path.join(self.img_path, labeldict['External ID'])
+        img = np.array(Image.open(img_path))
+
+        h, w, _ = img.shape
+        dim_diff = np.abs(h - w)
+        # Upper (left) and lower (right) padding
+        pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
+        # Determine padding
+        pad = ((pad1, pad2), (0, 0), (0, 0)) if h <= w else ((0, 0), (pad1, pad2), (0, 0))
+        # Add padding
+        input_img = np.pad(img, pad, 'constant', constant_values=128) / 255.
+        padded_h, padded_w, _ = input_img.shape
+        # Resize and normalize
+        input_img = resize(input_img, (*self.img_shape, 3), mode='reflect')
+        # Channels-first
+        input_img = np.transpose(input_img, (2, 0, 1))
+        # As pytorch tensor
+        input_img = torch.from_numpy(input_img).float()
+
+        # Load the label
+        labels = []
+        for class_name, class_ in zip(labeldict['Label'].keys(),
+                                      labeldict['Label'].values()):
+            for bbox in class_:
+                bbox = bbox['geometry']
+                labels.append([self.class_names.index(class_name),
+                               bbox[0]['x'],  # x1
+                               bbox[0]['y'],  # y1
+                               bbox[2]['x'],  # x2
+                               bbox[2]['y']])  # y2
+
+        labels = np.array(labels)
+        # Adjust for added padding
+        labels[:, 1] += pad[1][0]  # x1
+        labels[:, 2] += pad[0][0]  # y1
+        labels[:, 3] += pad[1][0]  # x2
+        labels[:, 4] += pad[0][0]  # y2
+
+        # Convert to [class, tx, ty, w, h] and normalize
+        labels[:, 1] = ((labels[:, 1] + labels[:, 3]) / 2) / padded_w
+        labels[:, 2] = ((labels[:, 2] + labels[:, 4]) / 2) / padded_h
+        labels[:, 3] = ((labels[:, 3] - labels[:, 1]) * 2) / padded_w
+        labels[:, 4] = ((labels[:, 4] - labels[:, 2]) * 2) / padded_h
+
+        # Fill matrix
+        filled_labels = np.zeros((self.max_objects, 5))
+        if labels is not None:
+            filled_labels[range(len(labels))[:self.max_objects]] = labels[:self.max_objects]
+        filled_labels = torch.from_numpy(filled_labels)
+
+        return img_path, input_img, filled_labels
+
+    def __len__(self):
+        return len(self.labellist)
+        
