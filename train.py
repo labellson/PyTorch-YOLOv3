@@ -67,8 +67,9 @@ if cuda:
 model.train()
 
 # Get dataloader
+dataset = LabelboxDataset(train_path, classes) if train_path.split('.')[-1] == 'json' else ListDataset(train_path)
 dataloader = torch.utils.data.DataLoader(
-    ListDataset(train_path), batch_size=opt.batch_size, shuffle=False, num_workers=opt.n_cpu
+    dataset, batch_size=opt.batch_size, shuffle=False, num_workers=opt.n_cpu
 )
 
 Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor

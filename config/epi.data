@@ -1,0 +1,4 @@
+classes=3
+train=/home/dlaguna/Development/Datasets/epi/labels/train.json
+names=./data/epi.names
+backup=backup/
