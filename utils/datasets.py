@@ -170,7 +170,7 @@ class LabelboxDataset(Dataset):
                                bbox[2]['x'],  # x2
                                bbox[2]['y']])  # y2
 
-        labels = np.array(labels)
+        labels = np.array(labels, dtype=np.float)
         # Adjust for added padding
         labels[:, 1] += pad[1][0]  # x1
         labels[:, 2] += pad[0][0]  # y1
@@ -178,10 +178,12 @@ class LabelboxDataset(Dataset):
         labels[:, 4] += pad[0][0]  # y2
 
         # Convert to [class, tx, ty, w, h] and normalize
-        labels[:, 1] = ((labels[:, 1] + labels[:, 3]) / 2) / padded_w
-        labels[:, 2] = ((labels[:, 2] + labels[:, 4]) / 2) / padded_h
-        labels[:, 3] = ((labels[:, 3] - labels[:, 1]) * 2) / padded_w
-        labels[:, 4] = ((labels[:, 4] - labels[:, 2]) * 2) / padded_h
+        x1, y1 = labels[:, 1].copy(), labels[:, 2].copy()
+        x2, y2 = labels[:, 3].copy(), labels[:, 4].copy()
+        labels[:, 1] = ((x1 + x2) / 2) / padded_w
+        labels[:, 2] = ((y1 + y2) / 2) / padded_h
+        labels[:, 3] = (np.abs(x2 - x1)) / padded_w
+        labels[:, 4] = (np.abs(y2 - y1)) / padded_h
 
         # Fill matrix
         filled_labels = np.zeros((self.max_objects, 5))
