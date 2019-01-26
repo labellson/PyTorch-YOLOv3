@@ -1,4 +1,6 @@
 classes=3
-train=/home/dlaguna/Development/Datasets/epi/labels/train.json
-names=./data/epi.names
+train=/home/dlaguna/Development/Datasets/epi/train.txt
+test=/home/dlaguna/Development/Datasets/epi/test.txt
+data=/home/dlaguna/Development/Datasets/epi/labels/data.json
+names=data/epi.names
 backup=backup/
