@@ -39,7 +39,11 @@ os.makedirs('output', exist_ok=True)
 
 # Set up model
 model = Darknet(opt.config_path, img_size=opt.img_size)
-model.load_weights(opt.weights_path)
+
+if not opt.weights_path.split('.')[-1] == 'pkl':
+    model.load_weights(opt.weights_path)
+else:
+    model.load_state_dict(torch.load(opt.weights_path))
 
 if cuda:
     model.cuda()
