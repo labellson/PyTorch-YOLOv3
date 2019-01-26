@@ -163,17 +163,22 @@ class LabelboxDataset(Dataset):
 
         # Load the label
         labels = []
-        for class_name, class_ in zip(labeldict['Label'].keys(),
-                                      labeldict['Label'].values()):
-            for bbox in class_:
-                bbox = bbox['geometry']
-                labels.append([self.class_names.index(class_name),
-                               bbox[0]['x'],  # x1
-                               bbox[0]['y'],  # y1
-                               bbox[2]['x'],  # x2
-                               bbox[2]['y']])  # y2
+        if type(labeldict['Label']) != str:
+            for class_name, class_ in zip(labeldict['Label'].keys(),
+                                          labeldict['Label'].values()):
+                for bbox in class_:
+                    bbox = bbox['geometry']
+                    labels.append([self.class_names.index(class_name),
+                                   bbox[0]['x'],  # x1
+                                   bbox[0]['y'],  # y1
+                                   bbox[2]['x'],  # x2
+                                   bbox[2]['y']])  # y2
 
-        labels = np.array(labels, dtype=np.float)
+            labels = np.array(labels, dtype=np.float)
+
+        else:
+            labels = None
+
         # Adjust for added padding
         if self.padding:
             labels[:, 1] += pad[1][0]  # x1
@@ -185,22 +190,24 @@ class LabelboxDataset(Dataset):
             input_img, padded_w, padded_h = img, w, h
 
         # Convert to [class, tx, ty, w, h] and normalize
-        x1, y1 = labels[:, 1].copy(), labels[:, 2].copy()
-        x2, y2 = labels[:, 3].copy(), labels[:, 4].copy()
-        labels[:, 1] = ((x1 + x2) / 2) / padded_w
-        labels[:, 2] = ((y1 + y2) / 2) / padded_h
-        labels[:, 3] = (np.abs(x2 - x1)) / padded_w
-        labels[:, 4] = (np.abs(y2 - y1)) / padded_h
+        if labels is not None:
+            x1, y1 = labels[:, 1].copy(), labels[:, 2].copy()
+            x2, y2 = labels[:, 3].copy(), labels[:, 4].copy()
+            labels[:, 1] = ((x1 + x2) / 2) / padded_w
+            labels[:, 2] = ((y1 + y2) / 2) / padded_h
+            labels[:, 3] = (np.abs(x2 - x1)) / padded_w
+            labels[:, 4] = (np.abs(y2 - y1)) / padded_h
 
         # Fill matrix
+        filled_labels = np.zeros((self.max_objects, 5))
         if self.padding:
-            filled_labels = np.zeros((self.max_objects, 5))
             if labels is not None:
                 filled_labels[range(len(labels))[:self.max_objects]] = labels[:self.max_objects]
             filled_labels = torch.from_numpy(filled_labels)
 
         else:
-            filled_labels = labels
+            if labels is not None:
+                filled_labels = labels
 
         return img_path, input_img, filled_labels
 
