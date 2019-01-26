@@ -111,3 +111,5 @@ for epoch in range(opt.epochs):
 
     if epoch % opt.checkpoint_interval == 0:
         model.save_weights("%s/%d.weights" % (opt.checkpoint_dir, epoch))
+        torch.save(model.state_dict(), '{}/{}.pkl'.format(checkpoint_dir,
+                                                          epoch))
