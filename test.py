@@ -71,7 +71,7 @@ for batch_i, (_, imgs, targets) in enumerate(tqdm.tqdm(dataloader, desc="Detecti
 
     with torch.no_grad():
         outputs = model(imgs)
-        outputs = non_max_suppression(outputs, 80, conf_thres=opt.conf_thres, nms_thres=opt.nms_thres)
+        outputs = non_max_suppression(outputs, num_classes, conf_thres=opt.conf_thres, nms_thres=opt.nms_thres)
 
     for output, annotations in zip(outputs, targets):
 

@@ -69,7 +69,7 @@ for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
     # Get detections
     with torch.no_grad():
         detections = model(input_imgs)
-        detections = non_max_suppression(detections, 80, opt.conf_thres, opt.nms_thres)
+        detections = non_max_suppression(detections, len(classes), opt.conf_thres, opt.nms_thres)
 
 
     # Log progress
