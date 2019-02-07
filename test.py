@@ -38,7 +38,7 @@ cuda = torch.cuda.is_available() and opt.use_cuda
 
 # Get data configuration
 data_config = parse_data_config(opt.data_config_path)
-test_path = data_config["valid"]
+test_path = data_config["test"]
 num_classes = int(data_config["classes"])
 
 # Initiate model
