@@ -3,8 +3,7 @@ import random
 import os
 import numpy as np
 
-import torch
-
+import torch 
 from torch.utils.data import Dataset
 from PIL import Image
 import torchvision.transforms as transforms
@@ -180,7 +179,7 @@ class LabelboxDataset(Dataset):
             labels = None
 
         # Adjust for added padding
-        if self.padding:
+        if labels is not None and self.padding:
             labels[:, 1] += pad[1][0]  # x1
             labels[:, 2] += pad[0][0]  # y1
             labels[:, 3] += pad[1][0]  # x2
