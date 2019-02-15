@@ -5,6 +5,7 @@ from utils.utils import load_classes
 from os import path
 
 import os
+import numpy as np
 
 from argparse import ArgumentParser
 
@@ -12,6 +13,11 @@ from argparse import ArgumentParser
 def convert_dataset(dataset, dataset_name):
     for i in range(len(dataset)):
         img_path, _, labels = dataset[i]
+
+        # Skip images without labels
+        if len(np.transpose(labels.nonzero())) < 1:
+            continue
+        
         img_base_path, img_name = path.split(img_path)
 
         dataset_path = path.join('/', *img_base_path.split('/')[:-1],
