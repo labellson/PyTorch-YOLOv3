@@ -51,7 +51,7 @@ class ListDataset(Dataset):
     def __init__(self, list_path, img_size=416):
         with open(list_path, 'r') as file:
             self.img_files = file.readlines()
-        self.label_files = [path.replace('images', 'labels').replace('.png', '.txt').replace('.jpg', '.txt') for path in self.img_files]
+        self.label_files = [path.replace('images', 'labels').rsplit('.', maxsplit=1)[0] + '.txt' for path in self.img_files]
         self.img_shape = (img_size, img_size)
         self.max_objects = 50
 
@@ -60,7 +60,6 @@ class ListDataset(Dataset):
         #---------
         #  Image
         #---------
-
         img_path = self.img_files[index % len(self.img_files)].rstrip()
         img = np.array(Image.open(img_path))
 
